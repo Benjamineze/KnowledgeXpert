@@ -4,6 +4,7 @@ from PyPDF2 import PdfReader
 from docx import Document
 import openai
 
+
 OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
 VALID_PASSWORDS = st.secrets["VALID_PASSWORDS"].split(",")
 
@@ -55,7 +56,7 @@ def query_gpt(prompt, context):
 
 # Streamlit UI
 
-# Custom CSS to add the dynamic background image
+# Custom CSS to add the background image
 def add_bg_from_local(image_file):
     with open(image_file, "rb") as file:
         data = file.read()
@@ -69,34 +70,28 @@ def add_bg_from_local(image_file):
                 background-position: center;
                 background-repeat: no-repeat;
                 background-attachment: fixed;
-            }}
-            @media (max-width: 768px) {{
-                .stApp {{
-                    background-size: contain;
-                }}
+                image-rendering: optimizeQuality;
             }}
             </style>
             """,
             unsafe_allow_html=True
         )
 
-# Call the function to add the dynamic background image
+# Call the function to add the background image
 add_bg_from_local("vecteezy_teal-background-high-quality_30679827.jpg") 
-
 
 def add_circle_image_to_bg(image_path):
     with open(image_path, "rb") as image_file:
         encoded_image = base64.b64encode(image_file.read()).decode()
     st.markdown(
         f"""
-        <div style="position: absolute; top: 25px; right: 270px;">
+        <div style="position: fixed; top: 25px; right: 28px;">
             <img src="data:image/png;base64,{encoded_image}" 
-                 style="border-radius: 100%; width: 40px; height: 40px;">
+                 style="border-radius: 50%; width: 50px; height: 50px;">
         </div>
         """,
         unsafe_allow_html=True
     )
-
 # Call the function with the path to the image
 add_circle_image_to_bg("Ke image.jfif")
 
@@ -125,6 +120,15 @@ if not st.session_state.logged_in:
 
 # File Upload Page
 if st.session_state.logged_in:
+    # Handle the Back button press before other actions to speed up rerun
+    col1, col_spacer, col2 = st.columns([2, 8, 2])
+    with col2:   # Back button
+        if st.button("Back"):  
+            st.session_state.uploaded_content = ""  
+            st.session_state.user_query = ""  
+            st.session_state.response = "" 
+            st.rerun()  # Rerun to go back to the upload page
+
     # Show the file uploader only if no content has been uploaded
     if not st.session_state.uploaded_content:
         uploaded_files = st.file_uploader("Upload Files", type=['pdf', 'docx'], accept_multiple_files=True)
@@ -143,34 +147,12 @@ if st.session_state.logged_in:
             else:
                 st.error("No text could be extracted from the documents.")
 
-    # Display the "Back" button and other options only after content has been uploaded
+    # Show "How may I help?" and response field only after file upload
     if st.session_state.uploaded_content:
-        # Display "Connected..." and "Back" button on the same line
-        col1, col_spacer, col2 = st.columns([8, 1, 1])
+        st.write("Connected....")  # Show "Connected" after successful upload
         
-        with col1:
-            st.markdown("<p style='display: inline-block;'>Connected...</p>", unsafe_allow_html=True)
-        
-        with col2:
-            # Add some space before the button using margin
-            st.markdown(
-                """
-                <style>
-                .custom-button {
-                    margin-top: 5px;
-                }
-                </style>
-                """,
-                unsafe_allow_html=True
-            )
-            if st.button("Back", key="back_button"):  
-                st.session_state.uploaded_content = ""  
-                st.session_state.user_query = ""  
-                st.session_state.response = "" 
-                st.rerun()  # Rerun to go back to the upload page
-
         # Text input for user query
-        user_query = st.text_input("How may I help?", value=st.session_state.user_query)
+        user_query = st.text_input("How may I help?:", value=st.session_state.user_query)
 
         if user_query:
             st.session_state.user_query = user_query  # Save the query in session state
@@ -187,3 +169,5 @@ if st.session_state.logged_in:
             st.session_state.response = ""  
             st.session_state.user_query = ""  
             st.rerun()  # Rerun the script to refresh the UI
+
+
