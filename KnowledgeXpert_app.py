@@ -4,7 +4,7 @@ from PyPDF2 import PdfReader
 from docx import Document
 import openai
 
-# Access the API key and passwords from the secrets
+
 OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
 VALID_PASSWORDS = st.secrets["VALID_PASSWORDS"].split(",")
 
@@ -87,7 +87,7 @@ def add_circle_image_to_bg(image_path):
         f"""
         <div style="display: flex; justify-content: flex-start; align-items: flex-start;">
             <img src="data:image/png;base64,{encoded_image}" 
-                 style="border-radius: 50%; width: 40px; height: 40px; position: absolute; right: 28px; margin-right: 260px; top: 25px; margin-bottom: 20px;">
+                 style="border-radius: 100%; width: 40px; height: 40px; position: absolute; right: 28px; margin-right: 241px; top: 25px; margin-bottom: 20px;">
         </div>
         """,
         unsafe_allow_html=True
@@ -124,10 +124,10 @@ if st.session_state.logged_in:
     # Handle the Back button press before other actions to speed up rerun
     col1, col_spacer, col2 = st.columns([2, 8, 2])
     with col2:   # Back button
-        if st.button("Back", use_container_width=True):  # Use container width for the back button
-            st.session_state.uploaded_content = ""  # Clear uploaded content to return to the upload page
-            st.session_state.user_query = ""  # Clear the user query to start fresh
-            st.session_state.response = ""  # Clear the response as well
+        if st.button("Back"):  
+            st.session_state.uploaded_content = ""  
+            st.session_state.user_query = ""  
+            st.session_state.response = "" 
             st.rerun()  # Rerun to go back to the upload page
 
     # Show the file uploader only if no content has been uploaded
@@ -165,10 +165,10 @@ if st.session_state.logged_in:
                 st.write("Response:")
                 st.write(st.session_state.response)
 
-        # Move Clear button below the response section
+       
         if st.button("Clear", key="clear_button"):
-            st.session_state.response = ""  # Clear the response
-            st.session_state.user_query = ""  # Clear the user query
+            st.session_state.response = ""  
+            st.session_state.user_query = ""  
             st.rerun()  # Rerun the script to refresh the UI
 
 
