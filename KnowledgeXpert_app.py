@@ -106,13 +106,15 @@ if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
 if 'uploaded_content' not in st.session_state:
     st.session_state.uploaded_content = ""
+if 'conversation_history' not in st.session_state:
+    st.session_state.conversation_history = []
 if 'user_query' not in st.session_state:
     st.session_state.user_query = ""
 if 'response' not in st.session_state:
     st.session_state.response = ""
 
 if not st.session_state.logged_in:
-    password = st.text_input("Enter the password to access the system files:", type="password")
+    password = st.text_input("Enter the password to access the system files:", type="password",)
     if st.button("Login"):
         if password in VALID_PASSWORDS:
             st.session_state.logged_in = True
@@ -120,6 +122,7 @@ if not st.session_state.logged_in:
             st.rerun()  
         else:
             st.error("Access denied! Incorrect password.")
+        
 
 if st.session_state.logged_in:
     if not st.session_state.uploaded_content:
@@ -138,30 +141,52 @@ if st.session_state.logged_in:
             else:
                 st.error("No text could be extracted from the documents.")
 
+    # Chat interface
     if st.session_state.uploaded_content:
-        col1, col_spacer, col2 = st.columns([8, 1, 1])
-        
-        with col1:
-            st.markdown("<p style='display: inline-block;'>Connected...</p>", unsafe_allow_html=True)
-        
-        with col2:
-            if st.button("Back", key="back_button"):  
-                st.session_state.uploaded_content = ""  
-                st.session_state.user_query = ""  
-                st.session_state.response = "" 
-                st.rerun()  
+        # Display conversation history
+        for exchange in st.session_state.conversation_history:
+            # User query (right-aligned)
+            st.markdown(
+                f"""
+                <div style='text-align: right; font-style: italic; font-size: 18px; padding: 10px 0;'>
+                    <b>Q:</b> {exchange['query']}
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+            # AI response (left-aligned with spacing and black color)
+            st.markdown(
+                f"""
+                <div style='text-align: left; color: #FBFBFB; font-size: 18px; padding: 10px 0;'>
+                    <b><i>Response</i>:</b> {exchange['response']}
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
 
-        user_query = st.text_input("How may I help?", value=st.session_state.user_query)
+        # Process query when user submits
+        def process_query():
+            if st.session_state.user_query.strip():
+                # Generate the response
+                response = query_gpt(st.session_state.user_query, st.session_state.uploaded_content)
+                # Append to conversation history
+                st.session_state.conversation_history.append(
+                    {"query": st.session_state.user_query, "response": response}
+                )
+                # Clear the input field
+                st.session_state.user_query = ""
 
-        if user_query:
-            st.session_state.user_query = user_query  
-            with st.spinner("Typing response..."):
-                answer = query_gpt(st.session_state.user_query, st.session_state.uploaded_content)
-                st.session_state.response = answer
-                st.write("Response:")
-                st.write(st.session_state.response)
+        # User query input
+        st.text_input(
+            "Ask?",
+            value=st.session_state.user_query,
+            key="user_query",
+            on_change=process_query
+        )
 
-        if st.button("Clear", key="clear_button"):
-            st.session_state.response = ""  
-            st.session_state.user_query = ""  
-            st.rerun()  
+        # Clear conversation
+        if st.button("Clear Conversation"):
+            st.session_state.conversation_history = []
+            st.rerun()
+
+
